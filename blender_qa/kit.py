@@ -13,10 +13,15 @@ _stack = []
 
 
 @contextmanager
-def item(name):
-    """with item("desk"): ...  — every object created inside is parented to an empty called `name`."""
+def item(name, role=None, front=None, target=None):
+    """with item("desk", role="table"): ...  — every object created inside is parented to an empty
+    called `name`. `role` / `front` / `target` become the qa_role / qa_front / qa_target tags the
+    rule packs read (e.g. item("chair", role="seat", front="+y"))."""
     g = bpy.data.objects.new(name, None)
     bpy.context.scene.collection.objects.link(g)
+    for k, v in (("qa_role", role), ("qa_front", front), ("qa_target", target)):
+        if v is not None:
+            g[k] = v
     before = set(bpy.data.objects)
     _stack.append(g)
     try:
@@ -116,11 +121,11 @@ def basin(x0, y0, x1, y1, z0, z1, m, wall=0.02, drain=None):
 def potted_plant(x, y, z, pot, soil, stem, leaf, h=0.9, r=0.18):
     """Pot + soil + leaves on stems that start at the soil — leaves never hover above the rim."""
     cyl((x, y, z + 0.15), r * 0.8, 0.3, pot, 20)
-    cyl((x, y, z + 0.28), r * 0.72, 0.02, soil, 20, 0)          # soil top just below the rim (no z-fight)
+    cyl((x, y, z + 0.302), r * 0.72, 0.008, soil, 20, 0)        # soil on the solid pot inside its rim (below the top it is hidden)
     hz = r * 0.55 * 1.6
     for k in range(5):
         a = k / 5 * math.tau
         lx, ly = x + math.cos(a) * r * 0.35, y + math.sin(a) * r * 0.35
-        cz = z + 0.3 + hz * 0.75 + h * 0.12 * (k % 3)
-        cyl((lx, ly, (z + 0.29 + cz) / 2), 0.012, cz - z - 0.29, stem, 6, 0)
+        cz = z + 0.3 + hz * 1.05 + h * 0.12 * (k % 3)           # leaf starts just above the soil
+        cyl((lx, ly, (z + 0.3 + cz) / 2), 0.012, cz - z - 0.3, stem, 6, 0)
         ball((lx, ly, cz), r * 0.55, leaf, (0.7, 0.7, 1.6))

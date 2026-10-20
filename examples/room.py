@@ -118,9 +118,9 @@ for i in range(9):
     box((-S / 2 + 0.15, y + t / 2, z0 + h / 2), (0.22, t, h), BOOK[i % 5], 0.008)
     y += t + 0.01
 # framed pictures
-for (fy, fz, w, h, c) in [(1.1, 1.6, 0.6, 0.45, "#7cc69b"), (1.1, 2.2, 0.4, 0.4, "#f2c14e")]:
-    box((-S / 2 + 0.03, fy - 2.6, fz + 0.4), (0.04, w, h), WOOD, 0.01)
-    box((-S / 2 + 0.06, fy - 2.6, fz + 0.4), (0.02, w - 0.08, h - 0.08), mat("pic" + c, c), 0.0)
+for (py, pz, w, h, c) in [(0.05, 2.0, 0.6, 0.45, "#7cc69b"), (0.75, 2.15, 0.4, 0.4, "#f2c14e")]:  # clear of the book shelf
+    box((-S / 2 + 0.02, py, pz), (0.04, w, h), WOOD, 0.01)
+    box((-S / 2 + 0.045, py, pz), (0.02, w - 0.08, h - 0.08), mat("pic" + c, c), 0.0)
 
 # round rug, floor cushion, potted plant in corner
 cyl((0.3, -0.5, 0.02), 1.0, 0.03, RUG, 64, bw=0.01)
@@ -130,9 +130,11 @@ for k in range(9):
     a = k / 9 * math.tau
     ball((1.6 + math.cos(a) * 0.12, -1.55 + math.sin(a) * 0.12, 0.65 + (k % 3) * 0.1), 0.13, LEAF, (0.5, 0.5, 1.6))
 # string lights along the top of the back wall
-for i in range(15):
-    x = -S / 2 + 0.2 + i * (S - 0.4) / 14
-    ball((x, S / 2 - 0.05, 2.85 - 0.12 * math.sin(i / 14 * math.pi * 2 % math.pi)), 0.035, mat(f"bulb{i%3}", ["#ffd36b", "#ff9ec4", "#9fd8ff"][i % 3], 0.3, emit=10))
+import props
+props.string_lights([(-S / 2 + 0.2 + i * (S - 0.4) / 14, S / 2 - 0.05, 2.89 - 0.12 * math.sin(i / 14 * math.pi * 2 % math.pi))
+                     for i in range(15)],
+                    [mat(f"bulb{k}", c, 0.3, emit=10) for k, c in enumerate(("#ffd36b", "#ff9ec4", "#9fd8ff"))],
+                    mat("wire", "#3a3530", 0.5), (0, -1, 0), 0.05)
 
 # lighting + camera
 w = bpy.data.worlds.new("w"); s.world = w; w.use_nodes = True

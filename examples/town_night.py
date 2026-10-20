@@ -51,68 +51,9 @@ for _ in range(45):
     a = random.uniform(0, math.tau); r = random.uniform(0.5, 5.5)
     ball((math.cos(a) * r, math.sin(a) * r, random.uniform(0.2, 1.2)), 0.02, FF, 8)
 
-# stars + moon on a plane behind the island, facing the camera
-cam = s.camera
-target = Vector((0, 0, -0.6))
-fwd = (target - cam.location).normalized()
-right = fwd.cross(Vector((0, 0, 1))).normalized(); up = right.cross(fwd)
-half = cam.data.ortho_scale / 2
-def camera_only(o):
-    o.visible_shadow = False; o.visible_diffuse = False; o.visible_glossy = False; o.visible_transmission = False
-
-# gradient night sky on a backdrop behind everything: deep navy at the top, violet-blue toward the bottom
-bpy.ops.mesh.primitive_plane_add(size=half * 2.4, location=target + fwd * 26)
-sky = bpy.context.object; sky.rotation_euler = fwd.to_track_quat('-Z', 'Y').to_euler(); camera_only(sky)
-sm = bpy.data.materials.new("sky"); sm.use_nodes = True; nt = sm.node_tree
-for n in list(nt.nodes):
-    if n.type != 'OUTPUT_MATERIAL': nt.nodes.remove(n)
-tc = nt.nodes.new("ShaderNodeTexCoord"); sep = nt.nodes.new("ShaderNodeSeparateXYZ")
-ramp = nt.nodes.new("ShaderNodeValToRGB"); em = nt.nodes.new("ShaderNodeEmission")
-ramp.color_ramp.elements[0].color = (*hexc("#3a2f63"), 1); ramp.color_ramp.elements[0].position = 0.15
-ramp.color_ramp.elements[1].color = (*hexc("#0d1230"), 1); ramp.color_ramp.elements[1].position = 0.85
-nt.links.new(tc.outputs["Generated"], sep.inputs[0]); nt.links.new(sep.outputs["Y"], ramp.inputs["Fac"])
-nt.links.new(ramp.outputs["Color"], em.inputs["Color"]); em.inputs["Strength"].default_value = 1.0
-nt.links.new(em.outputs[0], nt.nodes["Material Output"].inputs["Surface"])
-sky.data.materials.append(sm)
-
-# sparse stars of varied size and brightness, kept to the upper sky
-star_mats = [emissive("star_dim", "#cfd6ff", 2.5), emissive("star_mid", "#fff8e0", 5),
-             emissive("star_warm", "#ffe6b0", 6), emissive("star_bright", "#ffffff", 12)]
-for _ in range(90):
-    u = random.uniform(-half, half); v = random.uniform(-half * 0.05, half)
-    m = random.choices(star_mats, weights=(5, 3, 1, 1))[0]
-    r = 0.012 + (0.02 if m.name == "star_bright" else 0.0) + random.uniform(0, 0.012)
-    camera_only(ball(target + fwd * 24 + right * u + up * v, r, m, 8))
-
-# crescent moon with faint craters and a soft halo
-mc = target + fwd * 23 + right * (-half * 0.62) + up * (half * 0.66)
-# flat crescent facing the camera: a thin disc minus an offset thicker disc
-face_rot = fwd.to_track_quat('-Z', 'Y').to_euler()
-bpy.ops.mesh.primitive_cylinder_add(vertices=96, radius=0.42, depth=0.02, location=mc, rotation=face_rot)
-moon = bpy.context.object; moon.data.materials.append(emissive("moon", "#fff1c2", 3)); camera_only(moon)
-bpy.ops.mesh.primitive_cylinder_add(vertices=96, radius=0.38, depth=0.3, location=mc + right * 0.2 + up * 0.13, rotation=face_rot)
-cut = bpy.context.object; cut.hide_render = True
-bo = moon.modifiers.new("crescent", 'BOOLEAN'); bo.operation = 'DIFFERENCE'; bo.object = cut
-crater = emissive("crater", "#e6d49e", 2.2)
-for du, dv, r in [(-0.27, -0.08, 0.05), (-0.18, -0.24, 0.035), (-0.32, 0.12, 0.03)]:
-    bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=r, depth=0.01, location=mc + right * du + up * dv - fwd * 0.02,
-                                        rotation=face_rot)
-    o = bpy.context.object; o.data.materials.append(crater); camera_only(o)
-# halo: emission that fades out toward the sphere's silhouette
-bpy.ops.mesh.primitive_uv_sphere_add(radius=0.95, segments=48, ring_count=24, location=mc + fwd * 0.5)
-halo = bpy.context.object; bpy.ops.object.shade_smooth(); camera_only(halo)
-hm = bpy.data.materials.new("halo"); hm.use_nodes = True; nt = hm.node_tree
-for n in list(nt.nodes):
-    if n.type != 'OUTPUT_MATERIAL': nt.nodes.remove(n)
-lw = nt.nodes.new("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.5
-pw = nt.nodes.new("ShaderNodeMath"); pw.operation = 'POWER'; pw.inputs[1].default_value = 5
-inv = nt.nodes.new("ShaderNodeMath"); inv.operation = 'SUBTRACT'; inv.inputs[0].default_value = 1
-em = nt.nodes.new("ShaderNodeEmission"); em.inputs["Color"].default_value = (*hexc("#fff1c2"), 1); em.inputs["Strength"].default_value = 0.22
-tr = nt.nodes.new("ShaderNodeBsdfTransparent"); mix = nt.nodes.new("ShaderNodeMixShader")
-nt.links.new(lw.outputs["Facing"], inv.inputs[1]); nt.links.new(inv.outputs[0], pw.inputs[0])
-nt.links.new(pw.outputs[0], mix.inputs["Fac"]); nt.links.new(tr.outputs[0], mix.inputs[1]); nt.links.new(em.outputs[0], mix.inputs[2])
-nt.links.new(mix.outputs[0], nt.nodes["Material Output"].inputs["Surface"])
-halo.data.materials.append(hm)
+# shared night sky: gradient backdrop, sparse stars, crescent moon with halo
+import nightsky
+nightsky.add(s, Vector((0, 0, -0.6)), moon=(-0.62, 0.66))
 
 s.render.filepath = __import__("os").path.abspath("town_night.png")
 bpy.ops.render.render(write_still=True)

@@ -22,6 +22,21 @@ def scene_bounds(scene, depsgraph, exclude=()):
     return lo, hi
 
 
+def set_samples(scene, samples):
+    """Lower the render samples on whichever engine is active; returns a function restoring them.
+    Works for Cycles and Eevee; other engines are left alone."""
+    eng = scene.render.engine
+    if eng == "CYCLES":
+        old = scene.cycles.samples
+        scene.cycles.samples = samples
+        return lambda: setattr(scene.cycles, "samples", old)
+    if "EEVEE" in eng and hasattr(scene.eevee, "taa_render_samples"):
+        old = scene.eevee.taa_render_samples
+        scene.eevee.taa_render_samples = samples
+        return lambda: setattr(scene.eevee, "taa_render_samples", old)
+    return lambda: None
+
+
 def _stitch(paths, cols, out_path):
     imgs = [bpy.data.images.load(p) for p in paths]
     w, h = imgs[0].size
@@ -62,11 +77,11 @@ def sweep(scene, out_dir, views=("front", "left"), tile=2.6, grid=None, z=None, 
         cols = nx
     cam_data = bpy.data.cameras.new("qa_cam"); cam_data.type = "ORTHO"
     cam = bpy.data.objects.new("qa_cam", cam_data); scene.collection.objects.link(cam)
-    old_cam, old_res, old_samples = scene.camera, (scene.render.resolution_x, scene.render.resolution_y), None
+    old_cam, old_res = scene.camera, (scene.render.resolution_x, scene.render.resolution_y, scene.render.resolution_percentage)
     scene.camera = cam
     scene.render.resolution_x = scene.render.resolution_y = size
-    if scene.render.engine == "CYCLES":
-        old_samples = scene.cycles.samples; scene.cycles.samples = samples
+    scene.render.resolution_percentage = 100
+    restore = set_samples(scene, samples)
     index = {}
     try:
         for view in views:
@@ -86,8 +101,48 @@ def sweep(scene, out_dir, views=("front", "left"), tile=2.6, grid=None, z=None, 
             index[view] = [(n, round(s[0], 2), round(s[1], 2)) for n, s in enumerate(spots)]
     finally:
         scene.camera = old_cam
-        scene.render.resolution_x, scene.render.resolution_y = old_res
-        if old_samples is not None:
-            scene.cycles.samples = old_samples
+        scene.render.resolution_x, scene.render.resolution_y, scene.render.resolution_percentage = old_res
+        restore()
         bpy.data.objects.remove(cam)
     return index
+
+
+def camera_shots(scene, out_dir, size=960, samples=16):
+    """Render the scene through every camera it has (perspective or ortho, any engine) — the hero views
+    the scene will be judged from. Without cameras, one perspective three-quarter view of the whole scene
+    is rendered. Returns [{"camera", "path"}]."""
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    os.makedirs(out_dir, exist_ok=True)
+    cams = [o for o in scene.objects if o.type == "CAMERA" and o.name != "qa_cam"]
+    temp = None
+    if not cams:
+        lo, hi = scene_bounds(scene, depsgraph)
+        c = (lo + hi) / 2
+        r = max((hi - lo).length / 2, 0.5)
+        data = bpy.data.cameras.new("qa_hero"); data.lens = 50; data.clip_end = r * 20
+        temp = bpy.data.objects.new("qa_hero", data); scene.collection.objects.link(temp)
+        d = Vector((1, -1, 0.8)).normalized()
+        temp.location = c + d * r / math.tan(data.angle / 2) * 1.1
+        temp.rotation_euler = (c - temp.location).to_track_quat("-Z", "Y").to_euler()
+        cams = [temp]
+    rx, ry, pct = scene.render.resolution_x, scene.render.resolution_y, scene.render.resolution_percentage
+    old_cam = scene.camera
+    k = size / max(rx, ry)
+    scene.render.resolution_x, scene.render.resolution_y = max(1, round(rx * k)), max(1, round(ry * k))
+    scene.render.resolution_percentage = 100
+    restore = set_samples(scene, samples)
+    shots = []
+    try:
+        for cam in cams:
+            scene.camera = cam
+            p = os.path.join(out_dir, f"camera_{cam.name.replace(' ', '_')}.png")
+            scene.render.filepath = p
+            bpy.ops.render.render(write_still=True)
+            shots.append({"camera": cam.name, "path": p})
+    finally:
+        scene.camera = old_cam
+        scene.render.resolution_x, scene.render.resolution_y, scene.render.resolution_percentage = rx, ry, pct
+        restore()
+        if temp is not None:
+            bpy.data.objects.remove(temp)
+    return shots

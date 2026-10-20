@@ -144,16 +144,17 @@ def framed_art(wall, c, z, w, h, kind):
 def plant(x, y, h=0.9, r=0.18):
     # pot with soil; leaves grow out of the soil on short stems, so nothing hovers above the rim
     cyl((x, y, 0.15), r * 0.8, 0.3, POT, 20)
-    cyl((x, y, 0.28), r * 0.72, 0.02, mat("#7a5238", 0.95), 20, 0)   # soil top just below the rim
+    cyl((x, y, 0.302), r * 0.72, 0.008, mat("#7a5238", 0.95), 20, 0)  # soil sits on the (solid) pot, inside its rim
+                                                                       # (a disc *below* the top was hidden inside the pot)
     hz = r * 0.55 * 1.6                       # half height of a leaf
     for k in range(5):
         a = k / 5 * math.tau
         lx, ly = x + math.cos(a) * r * 0.35, y + math.sin(a) * r * 0.35
-        cz = 0.3 + hz * 0.75 + h * 0.12 * (k % 3)
-        cyl((lx, ly, (0.29 + cz) / 2), 0.012, cz - 0.29, mat("#4f9a72", 0.7), 6, 0)
+        cz = 0.3 + hz * 1.05 + h * 0.12 * (k % 3)   # leaf starts just above the soil, stem visible
+        cyl((lx, ly, (0.3 + cz) / 2), 0.012, cz - 0.3, mat("#4f9a72", 0.7), 6, 0)
         ball((lx, ly, cz), r * 0.55, LEAF, (0.7, 0.7, 1.6))
     cz = 0.3 + hz * 0.9 + h * 0.22
-    cyl((x, y, (0.29 + cz) / 2), 0.014, cz - 0.29, mat("#4f9a72", 0.7), 6, 0)
+    cyl((x, y, (0.3 + cz) / 2), 0.014, cz - 0.3, mat("#4f9a72", 0.7), 6, 0)
     ball((x, y, cz), r * 0.5, LEAF, (0.7, 0.7, 1.7))
 
 def faucet(x, y, z, dx, dy):

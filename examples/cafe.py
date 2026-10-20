@@ -85,7 +85,7 @@ box((BX - 0.95, fy - 0.03, 0.95), (0.8, 0.08, 1.6), TRIM, 0.03)
 box((BX - 0.95, fy - 0.07, 0.93), (0.66, 0.06, 1.5), WOOD, 0.02)
 box((BX - 0.95, fy - 0.1, 1.15), (0.46, 0.03, 0.75), GLASS, 0.01)
 ball((BX - 0.72, fy - 0.12, 0.85), 0.035, YELLOW)
-text("OPEN", (BX - 0.95, fy - 0.13, 1.68), 0.13, RED)
+text("OPEN", (BX - 0.95, fy - 0.135, 1.3), 0.11, RED)  # on the door glass, back face touching it
 box((BX - 0.95, fy - 0.3, 0.09), (0.9, 0.4, 0.08), CURB, 0.02)  # step
 
 # striped awning over the front
@@ -114,16 +114,17 @@ for wy in (BY - 0.6, BY + 0.6):
     box((fx - 0.15, wy, 0.75), (0.24, 0.8, 0.14), WOOD, 0.02)  # flower box
     for k in range(5):
         ball((fx - 0.15, wy - 0.3 + k * 0.15, 0.86), 0.07, PINK if k % 2 else YELLOW)
-box((fx - 0.3, BY - 1.35, 2.2), (0.5, 0.04, 0.04), METAL, 0.01)
+box((fx - 0.275, BY - 1.35, 2.2), (0.55, 0.04, 0.04), METAL, 0.01)  # bracket from the wall face
 cyl((fx - 0.45, BY - 1.35, 1.98), 0.2, 0.05, CREAM, 32, rot=(R(90), 0, 0), bw=0.02)  # round hanging sign, faces -y
 text("☕", (fx - 0.45, BY - 1.385, 1.98), 0.2, CHOC) if False else None
 cyl((fx - 0.45, BY - 1.38, 1.98), 0.08, 0.02, CHOC, 20, rot=(R(90), 0, 0), bw=0)  # cup icon body
 # roof details: AC unit + potted plants + string of lights along cornice
 box((BX + 0.8, BY + 0.6, H + 0.4), (0.6, 0.45, 0.4), TRIM, 0.04)
-for i in range(12):
-    t = i / 11
-    ball((fx + 0.05 + t * W, fy - 0.08, H - 0.05 - 0.08 * math.sin(t * math.pi * 3) ** 2), 0.035,
-         mat(["#ffd36b", "#ff9ec4", "#9fd8ff"][i % 3], 0.3, emit=8))
+import props
+props.string_lights([(fx + 0.08 + i / 11 * (W - 0.16), fy - 0.08, H - 0.01 - 0.08 * math.sin(i / 11 * math.pi * 3) ** 2)
+                     for i in range(12)],
+                    [mat(c, 0.3, emit=8) for c in ("#ffd36b", "#ff9ec4", "#9fd8ff")], mat("#3a3530", 0.5),
+                    (0, -1, 0), 0.08)
 
 # --- outdoor seating: round table, umbrella, two chairs FACING the table ---
 tx, ty = -1.3, -1.6
@@ -144,7 +145,7 @@ def chair(cx, cy, facing):
             cyl((cx + sx * 0.17, cy + sy * 0.17, 0.22), 0.02, 0.44, METAL, 8, bw=0)
     bx_, by_ = cx - fx_ * 0.2, cy - fy_ * 0.2
     size = (0.04, 0.42, 0.45) if abs(fx_) > abs(fy_) else (0.42, 0.04, 0.45)
-    box((bx_, by_, 0.72), size, WOOD, 0.02)
+    box((bx_, by_, 0.7), size, WOOD, 0.02)  # backrest stands on the seat
 chair(tx - 0.65, ty, (1, 0))
 chair(tx + 0.65, ty, (-1, 0))
 

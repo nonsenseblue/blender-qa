@@ -10,7 +10,14 @@ bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.5, radius2=0.33, depth=1.7
 tower = bpy.context.object; tower.data.materials.append(WHITE_W); bevel(tower, 0.02)
 cone((WX, WY, 1.95), 0.45, 0.55, RED_R, 8)
 box((WX, WY - 0.49, 0.32), (0.24, 0.05, 0.44), DARKW, 0.01)                       # door
-box((WX - 0.12, WY - 0.45, 1.15), (0.14, 0.05, 0.16), GLOW, 0.01)                   # little window
+# little window seated on the tower's slanted facet (an axis-aligned box hovered 10 cm off it)
+from mathutils.bvhtree import BVHTree
+bpy.context.view_layer.update()
+_bvh = BVHTree.FromObject(tower, bpy.context.evaluated_depsgraph_get())   # tree is in the tower's local space
+_mw = tower.matrix_world
+_p, _n, _i, _d = _bvh.ray_cast(_mw.inverted() @ Vector((WX - 0.12, WY - 2, 1.15)), Vector((0, 1, 0)))
+_p, _n = _mw @ _p, (_mw.to_3x3() @ _n).normalized()
+box(_p + _n * 0.02, (0.14, 0.05, 0.16), GLOW, 0.01, rot=_n.to_track_quat('-Y', 'Z').to_euler())
 hub = Vector((WX, WY - 0.62, 1.7))
 cyl(hub + Vector((0, 0.1, 0)), 0.05, 0.3, DARKW, 12, 0.005, rot=(R(90), 0, 0))     # axle into the cap
 cyl(hub, 0.08, 0.08, DARKW, 16, 0.01, rot=(R(90), 0, 0))
@@ -66,6 +73,8 @@ for i in range(6):  # planks run from the shore (y -1.1) out over the water
 for py in (-1.1, -0.45):
     for px in (0.4, 0.7):
         cyl((px, py, 0.02), 0.025, 0.2, DARKW, 8, 0)
+for px in (0.43, 0.67):  # joists under the planks (planks with gaps between them need something to lie on)
+    box((px, -0.775, 0.04), (0.04, 0.76, 0.03), DARKW, 0.004)
 
 group_new(_snap, "grp_jetty"); _snap = set(bpy.data.objects)
 # three sheep grazing in the front meadow
@@ -155,7 +164,7 @@ box((1.95, VY0 - 0.2, 0.04), (0.5, 0.3, 0.05), STONEB, 0.01)                    
 box((1.95, VY0 - 0.17, 0.66), (0.62, 0.42, 0.05), ROOF, 0.015)                        # porch roof
 for px in (1.71, 2.19):
     cyl((px, VY0 - 0.33, 0.35), 0.028, 0.6, TRIMW, 12, 0.005)
-box((1.62, VY0 - 0.04, 0.5), (0.06, 0.04, 0.1), GLOW, 0.01)                            # porch lamp
+box((1.62, VY0 - 0.02, 0.5), (0.06, 0.04, 0.1), GLOW, 0.01)                            # porch lamp, on the wall
 
 # one-storey wing at the front right; its flat roof is the upstairs balcony
 WX0, WX1, WY0 = 2.6, 3.4, 0.3
@@ -169,8 +178,8 @@ for i in range(1, 6):
     box((WX1 - 0.03, WY0 + 0.03 + i * (VY0 - WY0 - 0.06) / 5, F1 + 0.13), (0.025, 0.025, 0.22), TRIMW, 0.004)
 box(((WX0 + WX1) / 2, WY0 + 0.03, F1 + 0.25), (WX1 - WX0, 0.04, 0.03), TRIMW, 0.006)
 box((WX1 - 0.03, (WY0 + VY0) / 2, F1 + 0.25), (0.04, VY0 - WY0, 0.03), TRIMW, 0.006)
-cyl((2.8, 0.55, F1 + 0.12), 0.07, 0.14, POT if "POT" in globals() else mat("#e7896b"), 16, 0.01)   # potted plant on the balcony
-ball((2.8, 0.55, F1 + 0.26), 0.1, LEAF2, sub=2)
+cyl((2.8, 0.55, F1 + 0.095), 0.07, 0.14, POT if "POT" in globals() else mat("#e7896b"), 16, 0.01)   # potted plant on the balcony
+ball((2.8, 0.55, F1 + 0.235), 0.1, LEAF2, sub=2)
 
 # upstairs front: two windows with flower boxes, french door onto the balcony
 for x in (1.7, 2.2):

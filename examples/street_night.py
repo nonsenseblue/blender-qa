@@ -48,19 +48,9 @@ for loc in [(1.35, -1.25, 1.0), (-0.15, -1.25, 1.0), (-1.05, 0.2, 1.3), (-1.05, 
 # greenhouse glows from inside
 point((4.2, 1.3, 2.9), 30, "#ffe0a0", 0.2)
 
-# stars + moon on a plane behind the scene, facing the camera
-cam = s.camera
-target = Vector((3.3, 0.3, 0.6))
-fwd = (target - cam.location).normalized()
-right = fwd.cross(Vector((0, 0, 1))).normalized(); up = right.cross(fwd)
-STAR = emissive("star", "#fff8e0", 10)
-for _ in range(160):
-    # the street block hides any star that lands behind it
-    u, v = random.uniform(-6.2, 6.2), random.uniform(-4.4, 4.4)
-    o = ball(target + fwd * 12 + right * u + up * v, random.uniform(0.02, 0.05), STAR)
-    o.visible_shadow = False; o.visible_diffuse = False; o.visible_glossy = False
-moon = ball(target + fwd * 12 + right * -4.6 + up * 3.3, 0.5, emissive("moon", "#fff3c4", 4))
-moon.visible_shadow = False
+# shared night sky: gradient backdrop, sparse stars, crescent moon with halo
+import nightsky
+nightsky.add(s, Vector((3.3, 0.3, 0.6)), moon=(-0.75, 0.74))
 
 s.render.filepath = __import__("os").path.abspath("street_night.png")
 bpy.ops.render.render(write_still=True)

@@ -28,21 +28,6 @@ def set_color(name, h):
 bg = s.world.node_tree.nodes["Background"]
 sun = next(o for o in s.objects if o.type == 'LIGHT' and o.data.type == 'SUN')
 
-def stars():
-    # a dome of tiny emissive dots behind the island, only seen by the camera
-    STAR = mat("star", (1, 1, 0.9), emit=12)
-    cam = s.camera
-    fwd = (Vector((0, 0, 0.3)) - cam.location).normalized()
-    right = fwd.cross(Vector((0, 0, 1))).normalized(); up = right.cross(fwd)
-    for _ in range(140):
-        u, v = random.uniform(-6, 6), random.uniform(-6, 6)
-        if abs(u) < 3.6 and -4.5 < v < 2.2: continue  # keep clear of the island
-        p = Vector((0, 0, 0.3)) + fwd * 8 + right * u + up * v
-        o = ball(p, random.uniform(0.015, 0.04), STAR)
-        o.visible_shadow = False; o.visible_diffuse = False; o.visible_glossy = False
-    moon = ball(Vector((0, 0, 0.3)) + fwd * 8 + right * 3.3 + up * 4.2, 0.45, mat("moon", hexc("#fff4c8"), emit=4))
-    moon.visible_shadow = False
-
 if mode == "night":
     bg.inputs[0].default_value = (*hexc("#1c2348"), 1); bg.inputs[1].default_value = 0.35
     sun.data.energy = 0.35; sun.data.color = hexc("#9fb4ff")
@@ -55,7 +40,8 @@ if mode == "night":
     FF = mat("firefly", hexc("#d8ff7a"), emit=25)
     for _ in range(22):
         ball((random.uniform(-2.5, 2.5), random.uniform(-2.5, 2.5), random.uniform(0.3, 1.6)), 0.025, FF)
-    stars()
+    import nightsky
+    nightsky.add(s, Vector((0, 0, 0.3)), moon=(-0.62, 0.5))
     out = "house_night"
 
 elif mode == "winter":

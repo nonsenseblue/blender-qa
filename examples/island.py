@@ -166,6 +166,9 @@ for sx in (-1, 1):
     for px in (-0.4, 0, 0.4):
         along = Vector((math.cos(R(32)), math.sin(R(32)), 0)) * px
         box((bx + off.x + along.x, by + off.y + along.y, 0.3), (0.05, 0.05, 0.2), WOOD, 0.01)
+    for px in (-0.38, 0.38):  # stout legs under the deck ends, set into the banks (the deck must not hover)
+        along = Vector((math.cos(R(32)), math.sin(R(32)), 0)) * px
+        box((bx + off.x * 0.85 + along.x, by + off.y * 0.85 + along.y, 0.03), (0.07, 0.07, 0.28), WOOD, 0.01)
 
 # ---------- cottage by the lake ----------
 HX, HY = 1.9, 1.3
@@ -237,7 +240,7 @@ for _ in range(40):  # flower dots on the meadow, kept off the water and mountai
 
 def cloud(x, y, z, sc):
     for dx, dz, r in [(0, 0, 0.45), (0.45, -0.08, 0.35), (-0.45, -0.1, 0.32), (0.2, 0.2, 0.32)]:
-        ball((x + dx * sc, y, z + dz * sc), r * sc, CLOUD, (1, 0.8, 0.8))
+        ball((x + dx * sc, y, z + dz * sc), r * sc, CLOUD, (1, 0.8, 0.8)).name = "cloud"
 cloud(-3.6, 2.2, 3.6, 1.0); cloud(3.4, 2.8, 2.6, 0.8); cloud(-4.2, -2.6, 0.6, 0.7)
 
 # ---------- light, sky, camera ----------

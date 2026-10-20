@@ -86,7 +86,7 @@ box((BX - 0.95, fy - 0.03, 0.95), (0.8, 0.08, 1.6), TRIM, 0.03)
 box((BX - 0.95, fy - 0.07, 0.93), (0.66, 0.06, 1.5), WOOD, 0.02)
 box((BX - 0.95, fy - 0.1, 1.15), (0.46, 0.03, 0.75), GLASS, 0.01)
 ball((BX - 0.72, fy - 0.12, 0.85), 0.035, YELLOW)
-text("OPEN", (BX - 0.95, fy - 0.13, 1.68), 0.13, RED)
+text("OPEN", (BX - 0.95, fy - 0.135, 1.3), 0.11, RED)  # on the door glass, back face touching it
 box((BX - 0.95, fy - 0.3, 0.09), (0.9, 0.4, 0.08), CURB, 0.02)  # step
 
 # striped awning over the front
@@ -115,16 +115,17 @@ for wy in (BY - 0.6, BY + 0.6):
     box((fx - 0.15, wy, 0.75), (0.24, 0.8, 0.14), WOOD, 0.02)  # flower box
     for k in range(5):
         ball((fx - 0.15, wy - 0.3 + k * 0.15, 0.86), 0.07, PINK if k % 2 else YELLOW)
-box((fx - 0.3, BY - 1.35, 2.2), (0.5, 0.04, 0.04), METAL, 0.01)
+box((fx - 0.275, BY - 1.35, 2.2), (0.55, 0.04, 0.04), METAL, 0.01)  # bracket from the wall face
 cyl((fx - 0.45, BY - 1.35, 1.98), 0.2, 0.05, CREAM, 32, rot=(R(90), 0, 0), bw=0.02)  # round hanging sign, faces -y
 text("☕", (fx - 0.45, BY - 1.385, 1.98), 0.2, CHOC) if False else None
 cyl((fx - 0.45, BY - 1.38, 1.98), 0.08, 0.02, CHOC, 20, rot=(R(90), 0, 0), bw=0)  # cup icon body
 # roof details: AC unit + potted plants + string of lights along cornice
 box((BX + 0.8, BY + 0.6, H + 0.4), (0.6, 0.45, 0.4), TRIM, 0.04)
-for i in range(12):
-    t = i / 11
-    ball((fx + 0.05 + t * W, fy - 0.08, H - 0.05 - 0.08 * math.sin(t * math.pi * 3) ** 2), 0.035,
-         mat(["#ffd36b", "#ff9ec4", "#9fd8ff"][i % 3], 0.3, emit=8))
+import props
+props.string_lights([(fx + 0.08 + i / 11 * (W - 0.16), fy - 0.08, H - 0.01 - 0.08 * math.sin(i / 11 * math.pi * 3) ** 2)
+                     for i in range(12)],
+                    [mat(c, 0.3, emit=8) for c in ("#ffd36b", "#ff9ec4", "#9fd8ff")], mat("#3a3530", 0.5),
+                    (0, -1, 0), 0.08)
 
 # --- outdoor seating: round table, umbrella, two chairs FACING the table ---
 tx, ty = -1.3, -1.6
@@ -145,7 +146,7 @@ def chair(cx, cy, facing):
             cyl((cx + sx * 0.17, cy + sy * 0.17, 0.22), 0.02, 0.44, METAL, 8, bw=0)
     bx_, by_ = cx - fx_ * 0.2, cy - fy_ * 0.2
     size = (0.04, 0.42, 0.45) if abs(fx_) > abs(fy_) else (0.42, 0.04, 0.45)
-    box((bx_, by_, 0.72), size, WOOD, 0.02)
+    box((bx_, by_, 0.7), size, WOOD, 0.02)  # backrest stands on the seat
 chair(tx - 0.65, ty, (1, 0))
 chair(tx + 0.65, ty, (-1, 0))
 
@@ -258,14 +259,14 @@ cyl((gx - 0.52, gy, GZ0 + 0.3), 0.012, 0.35, WOOD, 6)
 ball((gx - 0.52, gy, GZ0 + 0.55), 0.13, LEAF)
 for k in range(4):
     a_ = k / 4 * math.tau
-    ball((gx - 0.52 + math.cos(a_) * 0.1, gy + math.sin(a_) * 0.1, GZ0 + 0.52), 0.025, YELLOW)
+    ball((gx - 0.52 + math.cos(a_) * 0.125, gy + math.sin(a_) * 0.125, GZ0 + 0.52), 0.025, YELLOW)  # lemons poke out of the crown
 # two pots hanging from the roof with trailing leaves
 for hx in (gx + 0.05, gx + 0.4):
     cyl((hx, gy, GZ1 - 0.08), 0.004, 0.14, METAL, 6)
     cone((hx, gy, GZ1 - 0.19), 0.06, 0.04, 0.08, POT, 16)
     ball((hx, gy, GZ1 - 0.14), 0.06, LEAF2)
-    for k in range(3):
-        ball((hx - 0.04 + k * 0.04, gy, GZ1 - 0.25 - k % 2 * 0.04), 0.022, LEAF)
+    for k in range(3):  # a trailing chain: each leaf touches the one above it
+        ball((hx - 0.03 + k * 0.03, gy, GZ1 - 0.25 - k % 2 * 0.03), 0.022, LEAF)
 
 # tiered flower stand on the pavement, buckets of bouquets
 sx0, sy0 = FX + 2.3, ffy - 0.75
@@ -287,7 +288,7 @@ bpy.context.object.data.materials.append(mat("#7fb4e0", 0.4))
 # street tree in a square planter, and a bench facing the street (backrest on the shop side)
 bx2, by2 = 7.1, 1.6
 box((bx2, by2, 0.42), (1.2, 0.4, 0.06), WOOD, 0.02)
-box((bx2, by2 + 0.18, 0.66), (1.2, 0.05, 0.3), WOOD, 0.02)
+box((bx2, by2 + 0.18, 0.6), (1.2, 0.05, 0.3), WOOD, 0.02)  # backrest stands on the seat
 for sx in (-1, 1):
     box((bx2 + sx * 0.5, by2, 0.2), (0.05, 0.35, 0.4), METAL, 0.01)
 # second street lamp at the far end
