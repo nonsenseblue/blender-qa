@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+qa_sweep/
+qa.json
+*.blend
+*.blend1
+examples/*.png
+examples/spin/
+examples/*_spin/
